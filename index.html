@@ -742,9 +742,21 @@
         <div class="loading-state"><div class="spinner"></div>Caricamento strade...</div>
       `;
       try {
-        const { data, error } = await supabaseClient.from("strade").select("*").order("nome_completo");
-        if (error) throw error;
-        allStrade = data || [];
+        const pageSize = 1000;
+        let from = 0;
+        let allRows = [];
+        while (true) {
+          const { data, error } = await supabaseClient
+            .from("strade")
+            .select("*")
+            .order("nome_completo")
+            .range(from, from + pageSize - 1);
+          if (error) throw error;
+          allRows = allRows.concat(data || []);
+          if (!data || data.length < pageSize) break;
+          from += pageSize;
+        }
+        allStrade = allRows;
 
         allZone = [...new Set(allStrade.map(s => s.zona).filter(z => z))].sort();
         allCitta = [...new Set(allStrade.map(s => s.citta).filter(c => c))].sort();
